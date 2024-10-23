@@ -90,7 +90,7 @@ export default function Chat() {
 
               <textarea
                 id="prompt"
-                className='w-full p-4 text-gray-100 bg-slate-800 focus:outline-none rounded-t-xl '
+                className='w-full p-4 text-gray-100 bg-gray-800 focus:outline-none rounded-t-xl '
                 onChange={ev => setPrompt(ev.target.value)}
                 value={prompt}
                 rows={2}
@@ -98,7 +98,7 @@ export default function Chat() {
 
               <div className='absolute right-2 top-5'>
                 <button type="button" 
-                  className="text-white bg-yellow-500 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2">
+                  className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2">
                   <ArrowUp />
                 </button>
               </div>
