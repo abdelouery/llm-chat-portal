@@ -100,7 +100,7 @@ export default function Chat() {
                 placeholder="At your service..."/>
 
               <div className='absolute right-2 top-5'>
-                <button type="button" 
+                <button type="submit" 
                   className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2">
                   <ArrowUp />
                 </button>
