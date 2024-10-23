@@ -12,10 +12,22 @@ function Sidebar({ onChatView, onSettingsView }: SidebarProps) {
   // }
 
   return (
-    <nav className="">
+    <nav className="bg-gray-900 p-6 h-screen w-48">
       <ul className="flex-column">
-        <li onClick={onChatView}>Chat</li>
-        <li onClick={onSettingsView}>Settings</li>
+        <li
+          onClick={onChatView}
+          className="text-white py-2.5 px-1.5
+          cursor-pointer hover:font-semibold"
+        >
+          Chat
+        </li>
+        <li
+          onClick={onSettingsView}
+          className="text-white py-2.5 px-1.5
+          cursor-pointer hover:font-semibold"
+        >
+          Settings
+        </li>
       </ul>
     </nav>
   )

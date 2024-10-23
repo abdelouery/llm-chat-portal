@@ -13,13 +13,12 @@ function App() {
   }
 
   return (
-    <div id="wrapper">
+    <div id="wrapper" className="flex">
       <Sidebar
         onChatView={() => setView('chat')}
         onSettingsView={() => setView('settings')}>
       </Sidebar>
-
-      <section id="content">
+      <section id="content" className='p-6'>
         {view === 'chat' ? <Chat></Chat> : renderSettings()}
       </section>
     </div>
