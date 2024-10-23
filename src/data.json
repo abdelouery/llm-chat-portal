@@ -1,0 +1,14 @@
+[
+  {
+    "user": "Hello, What is C++",
+    "assistant": "C++ is a programming language"
+  },
+  {
+    "user": "Continue...",
+    "assistant": "Sure thing! it's a superset of C (it's previous predecessor)."
+  },
+  {
+    "user": "Provide an example please",
+    "assistant": "Of course! std::cout << \"Hello World!\" << std::endl,"
+  }
+]
