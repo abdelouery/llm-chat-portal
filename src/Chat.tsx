@@ -73,8 +73,11 @@ export default function Chat() {
 
   return (
     <>
-      <div className=''>
-        <h2 className='text-center p-4 text-2xl text-white font-semibold'>Chat with your LLM!</h2>
+      <h2
+        className='text-center p-4 text-2xl text-white font-semibold'
+        >
+        Chat with your LLM!
+      </h2>
 
         <div id="history">
           {dataMap}
@@ -106,7 +109,6 @@ export default function Chat() {
             <br />
           </form>
         </div>
-      </div>
     </>
   )
 } 
