@@ -1,3 +1,4 @@
+import { ArrowUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import myData from './data.json'
 
@@ -82,22 +83,24 @@ export default function Chat() {
         <div className='flex justify-center'>
           <form
             id="chat-form"
-            className='fixed text-center w-4/5 rounded-lg bottom-0 bg-gray-200'
+            className='fixed text-center w-4/5 bottom-0'
             onSubmit={handleSubmit}>
             
-            <div id="prompt-control" className=' flex text-center float-start'>
+            <div id="prompt-control" className='w-full flex text-center float-start'>
 
               <textarea
                 id="prompt"
-                className='w-full p-2 ring-2 ring-gray-900 rounded-lg'
+                className='w-full p-4 text-gray-100 bg-slate-800 focus:outline-none rounded-t-xl '
                 onChange={ev => setPrompt(ev.target.value)}
                 value={prompt}
-                rows={6}
+                rows={2}
                 placeholder="At your service..."/>
 
-              <div>
+              <div className='absolute right-2 top-5'>
                 <button type="button" 
-                className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2">Default</button>
+                  className="text-white bg-yellow-500 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2">
+                  <ArrowUp />
+                </button>
               </div>
             </div>
             <br />

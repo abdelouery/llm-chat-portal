@@ -14,7 +14,7 @@ function Sidebar({ onChatView, onSettingsView }: SidebarProps) {
   // }
 
   return (
-    <div className="absolute bottom-0 left-0 p-2">
+    <div className="absolute bottom-0 left-0 px-6 py-2">
       <div
         onClick={onChatView}
         className="text-white py-2.5 px-1.5
