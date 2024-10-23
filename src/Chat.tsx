@@ -40,10 +40,18 @@ export default function Chat() {
   }
 
   const dataMap = data.map(item => (
-    <div className='mx-auto'>
-      <div key={item.user} className="history-entry block py-4">
-        <span className='text-gray-100'><small><pre>User: {item.user}</pre></small></span>
-        <span className='text-gray-100'><strong>Assistant:</strong> {item.assistant}</span>
+    <div key={item.user} className='mx-auto'>
+      <div className="history-entry py-4 flex flex-col gap-2">
+        <div className='flex'>
+          <div className='rounded-lg p-2 bg-gray-800 w-fit'>
+            <span className='text-gray-100'><small><pre>User: {item.user}</pre></small></span>
+          </div>
+        </div>
+        <div className='flex'>
+          <div className='rounded-lg p-2 bg-yellow-700 w-fit'>
+            <span className='text-gray-100'><strong>Assistant:</strong> {item.assistant}</span>
+          </div>
+        </div>
       </div>
     </div>
   ))
@@ -65,7 +73,7 @@ export default function Chat() {
   return (
     <>
       <div className=''>
-        <h2 className='text-center text-2xl text-white font-semibold'>Chat with your LLM!</h2>
+        <h2 className='text-center p-4 text-2xl text-white font-semibold'>Chat with your LLM!</h2>
 
         <div id="history">
           {dataMap}
