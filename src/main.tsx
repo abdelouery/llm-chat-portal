@@ -5,6 +5,8 @@ import './main.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <div className='w-full min-h-screen bg-gray-950'>
+      <App />
+    </div>
   </StrictMode>,
 )
