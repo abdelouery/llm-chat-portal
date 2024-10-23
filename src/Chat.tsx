@@ -79,7 +79,7 @@ export default function Chat() {
         Chat with your LLM!
       </h2>
 
-        <div id="history">
+        <div id="history" className='pb-20'>
           {dataMap}
         </div>
 
