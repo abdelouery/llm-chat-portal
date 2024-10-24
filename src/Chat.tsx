@@ -1,5 +1,5 @@
 import { ArrowUp } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import myData from './data.json'
 
 type UserAssistantInteraction = {
@@ -10,13 +10,40 @@ type UserAssistantInteraction = {
 export default function Chat() {
   const [data, setData] = useState<UserAssistantInteraction[]>([])
   const [prompt, setPrompt] = useState<string>('')
+  const [showScrollTop, setShowScrollTop] = useState(false)
+  const historyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Fetch existing history
-
-
     setData(myData)
-  }, [])
+
+    if (historyRef.current) {
+      historyRef.current.scrollTop = historyRef.current.scrollHeight
+    }
+
+    const historyElement = historyRef.current
+    if (historyElement) {
+      historyElement.addEventListener('scroll', handleScroll)
+      return () => historyElement.removeEventListener('scroll', handleScroll)
+    }
+  }, [data])
+
+  // Gérer l'apparition/disparition du bouton de scroll
+  const handleScroll = () => {
+    if (historyRef.current) {
+      const scrollTop = historyRef.current.scrollTop
+      setShowScrollTop(scrollTop > 100) // Afficher après 100px de scroll
+    }
+  }
+
+  // Fonction pour remonter en haut
+  const scrollToTop = () => {
+    if (historyRef.current) {
+      historyRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   async function promptLLM(query: string) {
     const interaction: UserAssistantInteraction = {
@@ -25,23 +52,10 @@ export default function Chat() {
     }
 
     setData([...data, interaction])
-
-    // const response = await fetch('http://localhost/llm-chat-portal-backend', {
-    //   body: JSON.stringify(query),
-    //   method: 'POST',
-    //   headers: {
-    //     'content-type': 'application/json'
-    //   }
-    // })
-
-    // const { data, errors } = await response.json()
-    // if (response.ok) {
-
-    // }
   }
 
   const dataMap = data.map(item => (
-    <div key={item.user} className='mx-auto'>
+    <div key={item.user} className='mx-auto w-3/4'>
       <div className="history-entry py-4 flex flex-col gap-2">
         <div className='flex'>
           <div className='rounded-lg p-2 bg-gray-800 w-fit'>
@@ -73,42 +87,54 @@ export default function Chat() {
 
   return (
     <>
-      <h2
-        className='text-center p-4 text-2xl text-white font-semibold'
-        >
+      <h2 className='text-center p-4 text-2xl text-white font-semibold'>
         Chat with your LLM!
       </h2>
 
-        <div id="history" className='pb-20'>
-          {dataMap}
-        </div>
+      <button 
+        onClick={scrollToTop}
+        className={`fixed right-10 top-20 text-white bg-yellow-600 rounded-full p-2 transition-opacity duration-300 hover:bg-yellow-700 ${
+          showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <ArrowUp className="h-5 w-5" />
+      </button>
 
-        <div className='flex justify-center'>
-          <form
-            id="chat-form"
-            className='fixed text-center w-4/5 bottom-0'
-            onSubmit={handleSubmit}>
-            
-            <div id="prompt-control" className='w-full flex text-center float-start'>
+      <div 
+        ref={historyRef} 
+        id="history" 
+        className='mx-auto flex-1 flex-col justify-center pb-8 h-[calc(100vh-200px)] overflow-y-auto'
+      >
+        {dataMap}
+      </div>
 
-              <textarea
-                id="prompt"
-                className='w-full p-4 text-gray-100 bg-gray-800 focus:outline-none rounded-t-xl '
-                onChange={ev => setPrompt(ev.target.value)}
-                value={prompt}
-                rows={2}
-                placeholder="At your service..."/>
+      <div className='flex justify-center'>
+        <form
+          id="chat-form"
+          className='fixed text-center w-4/5 bottom-0'
+          onSubmit={handleSubmit}>
+          
+          <div id="prompt-control" className='w-full flex text-center float-start'>
+            <textarea
+              id="prompt"
+              className='w-full p-4 text-gray-100 bg-gray-800 focus:outline-none rounded-t-xl'
+              onChange={ev => setPrompt(ev.target.value)}
+              value={prompt}
+              rows={2}
+              placeholder="At your service..."/>
 
-              <div className='absolute right-2 top-5'>
-                <button type="submit" 
-                  className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2">
-                  <ArrowUp />
-                </button>
-              </div>
+            <div className='absolute right-2 top-5'>
+              <button 
+                type="submit" 
+                className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2"
+              >
+                <ArrowUp />
+              </button>
             </div>
-            <br />
-          </form>
-        </div>
+          </div>
+          <br />
+        </form>
+      </div>
     </>
   )
-} 
+}

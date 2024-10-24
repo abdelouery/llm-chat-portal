@@ -5,3 +5,26 @@
 html {
   background: #030712;
 }
+
+#history {
+  scrollbar-width: thin;
+  scrollbar-color: #ca8a04 #1f2937;
+  border-radius: 4px;
+  scroll-behavior: smooth; /* Ajouter ceci pour un défilement fluide */
+  -webkit-overflow-scrolling: touch; /* Pour une meilleure performance sur iOS */
+}
+
+/* Ajouter le support Webkit */
+#history::-webkit-scrollbar {
+  width: 8px;
+}
+
+#history::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 4px;
+}
+
+#history::-webkit-scrollbar-thumb {
+  background-color: #ca8a04;
+  border-radius: 4px;
+}
