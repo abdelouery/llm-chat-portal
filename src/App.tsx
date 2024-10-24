@@ -8,7 +8,9 @@ function App() {
 
   function renderSettings() {
     return (
-      <h2>Settings</h2>
+      <h2 className='text-center p-4 text-2xl text-white font-semibold'>
+        Settings
+      </h2>
     )
   }
 
