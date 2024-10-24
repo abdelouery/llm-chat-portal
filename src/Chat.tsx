@@ -25,7 +25,7 @@ export default function Chat() {
       historyElement.addEventListener('scroll', handleScroll)
       return () => historyElement.removeEventListener('scroll', handleScroll)
     }
-  }, [])
+  }, [data])
 
   // Gérer l'apparition/disparition du bouton de scroll
   const handleScroll = () => {
