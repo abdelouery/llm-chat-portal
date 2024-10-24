@@ -10,18 +10,45 @@ type UserAssistantInteraction = {
 export default function Chat() {
   const [data, setData] = useState<UserAssistantInteraction[]>([])
   const [prompt, setPrompt] = useState<string>('')
+  const [showScrollTop, setShowScrollTop] = useState(false)
   const historyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setData(myData)
   }, [])
 
-  // Effet pour gérer le défilement automatique
   useEffect(() => {
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight
     }
-  }, [data]) // Se déclenche à chaque mise à jour des données
+  }, [data])
+
+  // Gérer l'apparition/disparition du bouton de scroll
+  const handleScroll = () => {
+    if (historyRef.current) {
+      const scrollTop = historyRef.current.scrollTop
+      setShowScrollTop(scrollTop > 100) // Afficher après 100px de scroll
+    }
+  }
+
+  // Ajouter l'événement de scroll
+  useEffect(() => {
+    const historyElement = historyRef.current
+    if (historyElement) {
+      historyElement.addEventListener('scroll', handleScroll)
+      return () => historyElement.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
+  // Fonction pour remonter en haut
+  const scrollToTop = () => {
+    if (historyRef.current) {
+      historyRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   async function promptLLM(query: string) {
     const interaction: UserAssistantInteraction = {
@@ -68,6 +95,15 @@ export default function Chat() {
       <h2 className='text-center p-4 text-2xl text-white font-semibold'>
         Chat with your LLM!
       </h2>
+
+      <button 
+        onClick={scrollToTop}
+        className={`fixed right-10 top-20 text-white bg-yellow-600 rounded-full p-2 transition-opacity duration-300 hover:bg-yellow-700 ${
+          showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <ArrowUp className="h-5 w-5" />
+      </button>
 
       <div 
         ref={historyRef} 
