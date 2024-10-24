@@ -1,20 +1,22 @@
 import { ArrowUp } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
-import myData from './data.json'
+import { request } from './request'
+import ReactMarkdown from 'react-markdown'
 
 type UserAssistantInteraction = {
-  user: string
-  assistant: string
+  role: string
+  content: string
 }
 
 export default function Chat() {
   const [data, setData] = useState<UserAssistantInteraction[]>([])
+  const [promptHappened, setPromptHappened] = useState(false)
   const [prompt, setPrompt] = useState<string>('')
   const [showScrollTop, setShowScrollTop] = useState(false)
   const historyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setData(myData)
+    fetchHistory()
 
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight
@@ -25,7 +27,7 @@ export default function Chat() {
       historyElement.addEventListener('scroll', handleScroll)
       return () => historyElement.removeEventListener('scroll', handleScroll)
     }
-  }, [data])
+  }, [promptHappened])
 
   // Gérer l'apparition/disparition du bouton de scroll
   const handleScroll = () => {
@@ -45,27 +47,44 @@ export default function Chat() {
     }
   }
 
-  async function promptLLM(query: string) {
-    const interaction: UserAssistantInteraction = {
-      user: query,
-      assistant: '...'
-    }
-
-    setData([...data, interaction])
+  const fetchHistory = async () => {
+    setPromptHappened(false)
+    request<UserAssistantInteraction[]>('http://localhost:8000/api/history').then(
+      data => setData(data)
+    )
   }
 
-  const dataMap = data.map(item => (
-    <div key={item.user} className='mx-auto w-3/4'>
+  const promptLLM = async (content: string) => {
+    request<UserAssistantInteraction>(
+      `http://localhost:8000/api/prompt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role: 'user', content })
+      }).then(
+      responseData => {
+        setData([...data, responseData])
+        setPromptHappened(true);
+      }
+    )
+  }
+
+  const dataMap = data.map((item, index) => (
+    <div key={index} className='mx-auto w-3/4'>
       <div className="history-entry py-4 flex flex-col gap-2">
         <div className='flex'>
-          <div className='rounded-lg p-2 bg-gray-800 w-fit'>
-            <span className='text-gray-100'><small><pre>User: {item.user}</pre></small></span>
-          </div>
-        </div>
-        <div className='flex'>
-          <div className='rounded-lg p-2 bg-yellow-700 w-fit'>
-            <span className='text-gray-100'><strong>Assistant:</strong> {item.assistant}</span>
-          </div>
+          { item.role === 'user'
+            ?
+            <div className='rounded-lg p-2 bg-gray-800 w-fit'>
+              <span className='text-gray-100'><small>{item.content}</small></span>
+            </div>
+            :
+            <div className='rounded-lg p-4 bg-yellow-700 w-fit'>
+              <span className='text-gray-100'><strong>{item.role}:</strong></span>
+              <ReactMarkdown className='prose text-slate-100	'>{item.content}</ReactMarkdown>
+            </div>
+          }
         </div>
       </div>
     </div>
@@ -82,6 +101,7 @@ export default function Chat() {
     if (value !== '') {
       promptLLM(value)
       setPrompt('')
+      setPromptHappened(true)
     }
   }
 
