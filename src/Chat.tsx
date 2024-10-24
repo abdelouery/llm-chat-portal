@@ -15,13 +15,17 @@ export default function Chat() {
 
   useEffect(() => {
     setData(myData)
-  }, [])
 
-  useEffect(() => {
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight
     }
-  }, [data])
+
+    const historyElement = historyRef.current
+    if (historyElement) {
+      historyElement.addEventListener('scroll', handleScroll)
+      return () => historyElement.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
 
   // Gérer l'apparition/disparition du bouton de scroll
   const handleScroll = () => {
@@ -30,15 +34,6 @@ export default function Chat() {
       setShowScrollTop(scrollTop > 100) // Afficher après 100px de scroll
     }
   }
-
-  // Ajouter l'événement de scroll
-  useEffect(() => {
-    const historyElement = historyRef.current
-    if (historyElement) {
-      historyElement.addEventListener('scroll', handleScroll)
-      return () => historyElement.removeEventListener('scroll', handleScroll)
-    }
-  }, [])
 
   // Fonction pour remonter en haut
   const scrollToTop = () => {
