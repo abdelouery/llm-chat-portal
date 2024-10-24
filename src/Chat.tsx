@@ -1,5 +1,5 @@
 import { ArrowUp } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import myData from './data.json'
 
 type UserAssistantInteraction = {
@@ -10,13 +10,18 @@ type UserAssistantInteraction = {
 export default function Chat() {
   const [data, setData] = useState<UserAssistantInteraction[]>([])
   const [prompt, setPrompt] = useState<string>('')
+  const historyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Fetch existing history
-
-
     setData(myData)
   }, [])
+
+  // Effet pour gérer le défilement automatique
+  useEffect(() => {
+    if (historyRef.current) {
+      historyRef.current.scrollTop = historyRef.current.scrollHeight
+    }
+  }, [data]) // Se déclenche à chaque mise à jour des données
 
   async function promptLLM(query: string) {
     const interaction: UserAssistantInteraction = {
@@ -25,19 +30,6 @@ export default function Chat() {
     }
 
     setData([...data, interaction])
-
-    // const response = await fetch('http://localhost/llm-chat-portal-backend', {
-    //   body: JSON.stringify(query),
-    //   method: 'POST',
-    //   headers: {
-    //     'content-type': 'application/json'
-    //   }
-    // })
-
-    // const { data, errors } = await response.json()
-    // if (response.ok) {
-
-    // }
   }
 
   const dataMap = data.map(item => (
@@ -73,12 +65,15 @@ export default function Chat() {
 
   return (
     <>
-      <h2
-        className='text-center p-4 text-2xl text-white font-semibold'>
+      <h2 className='text-center p-4 text-2xl text-white font-semibold'>
         Chat with your LLM!
       </h2>
 
-      <div id="history" className='pb-20'>
+      <div 
+        ref={historyRef} 
+        id="history" 
+        className='pb-8 h-[calc(100vh-200px)] overflow-y-auto'
+      >
         {dataMap}
       </div>
 
@@ -89,18 +84,19 @@ export default function Chat() {
           onSubmit={handleSubmit}>
           
           <div id="prompt-control" className='w-full flex text-center float-start'>
-
             <textarea
               id="prompt"
-              className='w-full p-4 text-gray-100 bg-gray-800 focus:outline-none rounded-t-xl '
+              className='w-full p-4 text-gray-100 bg-gray-800 focus:outline-none rounded-t-xl'
               onChange={ev => setPrompt(ev.target.value)}
               value={prompt}
               rows={2}
               placeholder="At your service..."/>
 
             <div className='absolute right-2 top-5'>
-              <button type="submit" 
-                className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2">
+              <button 
+                type="submit" 
+                className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2"
+              >
                 <ArrowUp />
               </button>
             </div>
@@ -110,4 +106,4 @@ export default function Chat() {
       </div>
     </>
   )
-} 
+}
