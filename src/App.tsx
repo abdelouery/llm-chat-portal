@@ -18,8 +18,8 @@ function App() {
         onChatView={() => setView('chat')}
         onSettingsView={() => setView('settings')}>
       </Sidebar>
-      <section id="content" className='flex-1 p-4 flex justify-center'> 
-        <div className="w-3/4"> 
+      <section id="content" className='w-full p-4 flex justify-center'> 
+        <div> 
           {view === 'chat' ? <Chat></Chat> : renderSettings()}
         </div>
       </section>

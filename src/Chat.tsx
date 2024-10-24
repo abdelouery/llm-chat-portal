@@ -33,7 +33,7 @@ export default function Chat() {
   }
 
   const dataMap = data.map(item => (
-    <div key={item.user} className='mx-auto'>
+    <div key={item.user} className='mx-auto w-3/4'>
       <div className="history-entry py-4 flex flex-col gap-2">
         <div className='flex'>
           <div className='rounded-lg p-2 bg-gray-800 w-fit'>
@@ -72,7 +72,7 @@ export default function Chat() {
       <div 
         ref={historyRef} 
         id="history" 
-        className='pb-8 h-[calc(100vh-200px)] overflow-y-auto'
+        className='mx-auto flex-1 flex-col justify-center pb-8 h-[calc(100vh-200px)] overflow-y-auto'
       >
         {dataMap}
       </div>

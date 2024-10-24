@@ -5,3 +5,8 @@
 html {
   background: #030712;
 }
+
+#history {
+  scrollbar-width: thin;
+  scrollbar-color: #ca8a04 #1f2937;
+}
