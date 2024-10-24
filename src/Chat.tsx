@@ -1,3 +1,4 @@
+import { ArrowUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import myData from './data.json'
 
@@ -40,10 +41,20 @@ export default function Chat() {
   }
 
   const dataMap = data.map(item => (
-    <ul key={item.user} className="history-entry">
-      <li><small><pre>User: {item.user}</pre></small></li>
-      <li><strong>Assistant:</strong> {item.assistant}</li>
-    </ul>
+    <div key={item.user} className='mx-auto'>
+      <div className="history-entry py-4 flex flex-col gap-2">
+        <div className='flex'>
+          <div className='rounded-lg p-2 bg-gray-800 w-fit'>
+            <span className='text-gray-100'><small><pre>User: {item.user}</pre></small></span>
+          </div>
+        </div>
+        <div className='flex'>
+          <div className='rounded-lg p-2 bg-yellow-700 w-fit'>
+            <span className='text-gray-100'><strong>Assistant:</strong> {item.assistant}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   ))
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -62,30 +73,42 @@ export default function Chat() {
 
   return (
     <>
-      <h2>Chat with your LLM!</h2>
+      <h2
+        className='text-center p-4 text-2xl text-white font-semibold'
+        >
+        Chat with your LLM!
+      </h2>
 
-      <div id="history">
-        {dataMap}
-        <hr />
-      </div>
-
-      <form id="chat-form" onSubmit={handleSubmit}>
-        <div id="prompt-control">
-          <label>
-            <small>Prompt:</small>
-          </label>
-
-          <textarea
-            id="prompt"
-            onChange={ev => setPrompt(ev.target.value)}
-            value={prompt}
-            rows={6}
-            placeholder="At your service..."/>
-
-          <input id="send-btn" type="submit" value="Send" />
+        <div id="history" className='pb-20'>
+          {dataMap}
         </div>
-        <br />
-      </form>
+
+        <div className='flex justify-center'>
+          <form
+            id="chat-form"
+            className='fixed text-center w-4/5 bottom-0'
+            onSubmit={handleSubmit}>
+            
+            <div id="prompt-control" className='w-full flex text-center float-start'>
+
+              <textarea
+                id="prompt"
+                className='w-full p-4 text-gray-100 bg-gray-800 focus:outline-none rounded-t-xl '
+                onChange={ev => setPrompt(ev.target.value)}
+                value={prompt}
+                rows={2}
+                placeholder="At your service..."/>
+
+              <div className='absolute right-2 top-5'>
+                <button type="submit" 
+                  className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2">
+                  <ArrowUp />
+                </button>
+              </div>
+            </div>
+            <br />
+          </form>
+        </div>
     </>
   )
 } 

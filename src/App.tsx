@@ -13,14 +13,15 @@ function App() {
   }
 
   return (
-    <div id="wrapper">
+    <div id="wrapper" className="w-full min-h-screen flex">
       <Sidebar
         onChatView={() => setView('chat')}
         onSettingsView={() => setView('settings')}>
       </Sidebar>
-
-      <section id="content">
-        {view === 'chat' ? <Chat></Chat> : renderSettings()}
+      <section id="content" className='flex-1 p-4 flex justify-center'> 
+        <div className="w-3/4"> 
+          {view === 'chat' ? <Chat></Chat> : renderSettings()}
+        </div>
       </section>
     </div>
   )
