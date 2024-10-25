@@ -2,13 +2,13 @@ import { ArrowUp } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
 import { request } from './request'
 import ReactMarkdown from 'react-markdown'
+import { UserAssistantInteraction } from './types'
 
-type UserAssistantInteraction = {
-  role: string
-  content: string
+type ChatProps = {
+  conversationId: string
 }
 
-export default function Chat() {
+export default function Chat({ conversationId }: ChatProps) {
   const [data, setData] = useState<UserAssistantInteraction[]>([])
   const [promptHappened, setPromptHappened] = useState(false)
   const [prompt, setPrompt] = useState<string>('')
@@ -16,7 +16,7 @@ export default function Chat() {
   const historyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetchHistory()
+    fetchHistory(conversationId)
 
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight
@@ -27,7 +27,7 @@ export default function Chat() {
       historyElement.addEventListener('scroll', handleScroll)
       return () => historyElement.removeEventListener('scroll', handleScroll)
     }
-  }, [promptHappened])
+  }, [promptHappened, conversationId])
 
   // Gérer l'apparition/disparition du bouton de scroll
   const handleScroll = () => {
@@ -47,42 +47,48 @@ export default function Chat() {
     }
   }
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (conversationId: string) => {
     setPromptHappened(false)
-    request<UserAssistantInteraction[]>('http://localhost:8000/api/history').then(
-      data => setData(data)
-    )
+    request<UserAssistantInteraction[]>(`http://localhost:8000/api/history/${conversationId}`)
+      .then(data => setData(data.filter(item => item.role !== 'system')))
   }
 
-  const promptLLM = async (content: string) => {
-    request<UserAssistantInteraction>(
-      `http://localhost:8000/api/prompt`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ role: 'user', content })
-      }).then(
-      responseData => {
-        setData([...data, responseData])
-        setPromptHappened(true);
-      }
+  const promptLLM = async (conversationId: string, content: string) => {
+    const interaction = { role: 'user', content }
+    const responseInteraction = { role: 'assistant', content: '' }
+
+    const response = await fetch(
+      `http://localhost:8000/api/prompt/${conversationId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ role: 'user', content })
+    }
     )
+
+    setPromptHappened(true);
+
+    const decoder = new TextDecoder()
+    for await (const chunk of response.body) {
+      responseInteraction.content += decoder.decode(chunk, { stream: true })
+      setData([...data, interaction, responseInteraction])
+    }
   }
 
   const dataMap = data.map((item, index) => (
     <div key={index} className='mx-auto w-3/4'>
       <div className="history-entry py-4 flex flex-col gap-2">
         <div className='flex'>
-          { item.role === 'user'
+          {item.role === 'user'
             ?
             <div className='rounded-lg p-2 bg-gray-800 w-fit'>
-              <span className='text-gray-100'><small>{item.content}</small></span>
+              <span className='text-gray-100'>{item.content}</span>
             </div>
             :
             <div className='rounded-lg p-4 bg-yellow-700 w-fit'>
               <span className='text-gray-100'><strong>{item.role}:</strong></span>
-              <ReactMarkdown className='prose text-slate-100	'>{item.content}</ReactMarkdown>
+              <ReactMarkdown className='prose text-slate-200'>{item.content}</ReactMarkdown>
             </div>
           }
         </div>
@@ -90,7 +96,7 @@ export default function Chat() {
     </div>
   ))
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const form = event.currentTarget
     const formElements = form.elements as typeof form.elements & {
@@ -99,7 +105,7 @@ export default function Chat() {
 
     const value = formElements.prompt.value.trim();
     if (value !== '') {
-      promptLLM(value)
+      promptLLM(conversationId, value)
       setPrompt('')
       setPromptHappened(true)
     }
@@ -111,18 +117,17 @@ export default function Chat() {
         Chat with your LLM!
       </h2>
 
-      <button 
+      <button
         onClick={scrollToTop}
-        className={`fixed right-10 top-20 text-white bg-yellow-600 rounded-full p-2 transition-opacity duration-300 hover:bg-yellow-700 ${
-          showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed right-10 top-20 text-white bg-yellow-600 rounded-full p-2 transition-opacity duration-300 hover:bg-yellow-700 ${showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
       >
         <ArrowUp className="h-5 w-5" />
       </button>
 
-      <div 
-        ref={historyRef} 
-        id="history" 
+      <div
+        ref={historyRef}
+        id="history"
         className='mx-auto flex-1 flex-col justify-center pb-8 h-[calc(100vh-200px)] overflow-y-auto'
       >
         {dataMap}
@@ -132,8 +137,13 @@ export default function Chat() {
         <form
           id="chat-form"
           className='fixed text-center w-4/5 bottom-0'
-          onSubmit={handleSubmit}>
-          
+          onSubmit={handleSubmit}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              handleSubmit(e)
+            }
+          }}>
+
           <div id="prompt-control" className='w-full flex text-center float-start'>
             <textarea
               id="prompt"
@@ -141,11 +151,11 @@ export default function Chat() {
               onChange={ev => setPrompt(ev.target.value)}
               value={prompt}
               rows={2}
-              placeholder="At your service..."/>
+              placeholder="At your service..." />
 
             <div className='absolute right-2 top-5'>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2"
               >
                 <ArrowUp />
