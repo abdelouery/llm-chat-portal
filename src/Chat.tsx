@@ -1,20 +1,31 @@
 import { ArrowUp } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
-import myData from './data.json'
+import ReactMarkdown from 'react-markdown'
+import { UserAssistantInteraction } from './types'
+import { useQuery } from '@tanstack/react-query'
+import { fetchHistory, sendPrompt } from './services/history'
+import { Spinner } from './Spinner'
 
-type UserAssistantInteraction = {
-  user: string
-  assistant: string
+type ChatProps = {
+  conversationId: string
 }
 
-export default function Chat() {
-  const [data, setData] = useState<UserAssistantInteraction[]>([])
+export default function Chat({ conversationId }: ChatProps) {
+  const [history, setHistory] = useState<UserAssistantInteraction[]>([])
+  const [promptHappened, setPromptHappened] = useState(false)
   const [prompt, setPrompt] = useState<string>('')
   const [showScrollTop, setShowScrollTop] = useState(false)
   const historyRef = useRef<HTMLDivElement>(null)
 
+  const { isPending, data } = useQuery({
+    queryKey: ['fetchHistory'],
+    queryFn: async () => fetchHistory(conversationId)
+  })
+
   useEffect(() => {
-    setData(myData)
+    if (data) {
+      setHistory(data.filter(i => i.role !== 'system'))
+    }
 
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight
@@ -25,7 +36,7 @@ export default function Chat() {
       historyElement.addEventListener('scroll', handleScroll)
       return () => historyElement.removeEventListener('scroll', handleScroll)
     }
-  }, [data])
+  }, [data, promptHappened, conversationId])
 
   // Gérer l'apparition/disparition du bouton de scroll
   const handleScroll = () => {
@@ -45,33 +56,41 @@ export default function Chat() {
     }
   }
 
-  async function promptLLM(query: string) {
-    const interaction: UserAssistantInteraction = {
-      user: query,
-      assistant: '...'
-    }
+  const promptLLM = async (conversationId: string, content: string) => {
+    const interaction = { role: 'user', content }
+    const responseInteraction = { role: 'assistant', content: '' }
 
-    setData([...data, interaction])
+    const response = sendPrompt(conversationId, content);
+    setPromptHappened(true);
+
+    const decoder = new TextDecoder()
+    for await (const chunk of response.body) {
+      responseInteraction.content += decoder.decode(chunk, { stream: true })
+      setHistory([...history, interaction, responseInteraction])
+    }
   }
 
-  const dataMap = data.map(item => (
-    <div key={item.user} className='mx-auto w-3/4'>
+  const dataMap = history.map((item, index) => (
+    <div key={index} className='mx-auto w-3/4'>
       <div className="history-entry py-4 flex flex-col gap-2">
         <div className='flex'>
-          <div className='rounded-lg p-2 bg-gray-800 w-fit'>
-            <span className='text-gray-100'><small><pre>User: {item.user}</pre></small></span>
-          </div>
-        </div>
-        <div className='flex'>
-          <div className='rounded-lg p-2 bg-yellow-700 w-fit'>
-            <span className='text-gray-100'><strong>Assistant:</strong> {item.assistant}</span>
-          </div>
+          {item.role === 'user'
+            ?
+            <div className='rounded-lg p-2 bg-gray-800 w-fit'>
+              <span className='text-gray-100'>{item.content}</span>
+            </div>
+            :
+            <div className='rounded-lg p-4 bg-yellow-700 w-fit'>
+              <span className='text-gray-100'><strong>{item.role}:</strong></span>
+              <ReactMarkdown className='prose text-slate-200'>{item.content}</ReactMarkdown>
+            </div>
+          }
         </div>
       </div>
     </div>
   ))
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const form = event.currentTarget
     const formElements = form.elements as typeof form.elements & {
@@ -80,31 +99,33 @@ export default function Chat() {
 
     const value = formElements.prompt.value.trim();
     if (value !== '') {
-      promptLLM(value)
+      promptLLM(conversationId, value)
       setPrompt('')
+      setPromptHappened(true)
     }
   }
 
   return (
     <>
       <h2 className='text-center p-4 text-2xl text-white font-semibold'>
-        Chat with your LLM!
+        {conversationId}
       </h2>
 
-      <button 
+      <button
         onClick={scrollToTop}
-        className={`fixed right-10 top-20 text-white bg-yellow-600 rounded-full p-2 transition-opacity duration-300 hover:bg-yellow-700 ${
-          showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed right-10 top-20 text-white bg-yellow-600 rounded-full p-2 transition-opacity duration-300 hover:bg-yellow-700 ${showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
       >
         <ArrowUp className="h-5 w-5" />
       </button>
 
-      <div 
-        ref={historyRef} 
-        id="history" 
+      <div
+        ref={historyRef}
+        id="history"
         className='mx-auto flex-1 flex-col justify-center pb-8 h-[calc(100vh-200px)] overflow-y-auto'
       >
+        { isPending && <Spinner/> }
+
         {dataMap}
       </div>
 
@@ -112,8 +133,13 @@ export default function Chat() {
         <form
           id="chat-form"
           className='fixed text-center w-4/5 bottom-0'
-          onSubmit={handleSubmit}>
-          
+          onSubmit={handleSubmit}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              handleSubmit(e)
+            }
+          }}>
+
           <div id="prompt-control" className='w-full flex text-center float-start'>
             <textarea
               id="prompt"
@@ -121,11 +147,11 @@ export default function Chat() {
               onChange={ev => setPrompt(ev.target.value)}
               value={prompt}
               rows={2}
-              placeholder="At your service..."/>
+              placeholder="At your service..." />
 
             <div className='absolute right-2 top-5'>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="text-white bg-yellow-600 rounded-lg text-sm px-3 py-2.5 mr-2 mb-2"
               >
                 <ArrowUp />
