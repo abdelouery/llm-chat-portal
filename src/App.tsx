@@ -1,39 +1,35 @@
 import Chat from './Chat'
-import { request } from './request'
 import Sidebar from './Sidebar'
 import { useEffect, useState } from 'react'
 import { Conversation } from './types'
+import { useQuery } from '@tanstack/react-query'
+import { createConversation, fetchConversations } from './services/conversations'
+import { formatDate } from './services/utils'
 
 function App() {
   const [view, setView] = useState<string>('chat')
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [currentConv, setCurrentConv] = useState<string>('')
-  const [isLoading, setIsLoading] = useState<boolean>(true)
+
+  const { isPending, data } = useQuery({
+    queryKey: ['fetchConversations'],
+    queryFn: fetchConversations
+  })
 
   useEffect(() => {
-    request<Conversation[]>(`http://localhost:8000/api/conversations`)
-      .then(data => {
-        setConversations(data)
-        setCurrentConv(data[0].title)
-        setIsLoading(false)
-      }
-    )
-  }, [])
+    if (data) {
+      setConversations(data)
+      setCurrentConv(data[0].title)
+    }
+  }, [isPending, data])
 
   const addEmptyConversation = () => {
-    request<Conversation>(
-      `http://localhost:8000/api/conversations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          title: "New",
-          creation_date: "25-10-2025",
-          history: []
-        })
-      }
-    ).then(data => setConversations([...conversations, data]))
+    const today = formatDate(new Date())
+    createConversation(`Conversation of ${today}`)
+      .then((created: Conversation) => {
+        setConversations([...conversations, created])
+        setCurrentConv(created.title)
+      })
   }
 
   const renderSettings = () => {
@@ -54,12 +50,15 @@ function App() {
         onSettingsView={() => setView('settings')}>
       </Sidebar>
 
-      { !isLoading &&
-        <section id="content" className='w-full p-4 flex justify-center'>
-          <div>
-            {view === 'chat' ? <Chat conversationId={currentConv}></Chat> : renderSettings()}
-          </div>
-        </section> }
+      <section id="content" className='w-full p-4 flex justify-center'>
+        <div>
+          {
+          view === 'chat'
+            ? <Chat conversationId={currentConv}></Chat>
+            : renderSettings()
+          }
+        </div>
+      </section>
     </div>
   )
 }

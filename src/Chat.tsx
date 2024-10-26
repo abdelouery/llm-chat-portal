@@ -1,22 +1,31 @@
 import { ArrowUp } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
-import { request } from './request'
 import ReactMarkdown from 'react-markdown'
 import { UserAssistantInteraction } from './types'
+import { useQuery } from '@tanstack/react-query'
+import { fetchHistory, sendPrompt } from './services/history'
+import { Spinner } from './Spinner'
 
 type ChatProps = {
   conversationId: string
 }
 
 export default function Chat({ conversationId }: ChatProps) {
-  const [data, setData] = useState<UserAssistantInteraction[]>([])
+  const [history, setHistory] = useState<UserAssistantInteraction[]>([])
   const [promptHappened, setPromptHappened] = useState(false)
   const [prompt, setPrompt] = useState<string>('')
   const [showScrollTop, setShowScrollTop] = useState(false)
   const historyRef = useRef<HTMLDivElement>(null)
 
+  const { isPending, data } = useQuery({
+    queryKey: ['fetchHistory'],
+    queryFn: async () => fetchHistory(conversationId)
+  })
+
   useEffect(() => {
-    fetchHistory(conversationId)
+    if (data) {
+      setHistory(data.filter(i => i.role !== 'system'))
+    }
 
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight
@@ -27,7 +36,7 @@ export default function Chat({ conversationId }: ChatProps) {
       historyElement.addEventListener('scroll', handleScroll)
       return () => historyElement.removeEventListener('scroll', handleScroll)
     }
-  }, [promptHappened, conversationId])
+  }, [data, promptHappened, conversationId])
 
   // Gérer l'apparition/disparition du bouton de scroll
   const handleScroll = () => {
@@ -47,36 +56,21 @@ export default function Chat({ conversationId }: ChatProps) {
     }
   }
 
-  const fetchHistory = async (conversationId: string) => {
-    setPromptHappened(false)
-    request<UserAssistantInteraction[]>(`http://localhost:8000/api/history/${conversationId}`)
-      .then(data => setData(data.filter(item => item.role !== 'system')))
-  }
-
   const promptLLM = async (conversationId: string, content: string) => {
     const interaction = { role: 'user', content }
     const responseInteraction = { role: 'assistant', content: '' }
 
-    const response = await fetch(
-      `http://localhost:8000/api/prompt/${conversationId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ role: 'user', content })
-    }
-    )
-
+    const response = sendPrompt(conversationId, content);
     setPromptHappened(true);
 
     const decoder = new TextDecoder()
     for await (const chunk of response.body) {
       responseInteraction.content += decoder.decode(chunk, { stream: true })
-      setData([...data, interaction, responseInteraction])
+      setHistory([...history, interaction, responseInteraction])
     }
   }
 
-  const dataMap = data.map((item, index) => (
+  const dataMap = history.map((item, index) => (
     <div key={index} className='mx-auto w-3/4'>
       <div className="history-entry py-4 flex flex-col gap-2">
         <div className='flex'>
@@ -114,7 +108,7 @@ export default function Chat({ conversationId }: ChatProps) {
   return (
     <>
       <h2 className='text-center p-4 text-2xl text-white font-semibold'>
-        Chat with your LLM!
+        {conversationId}
       </h2>
 
       <button
@@ -130,6 +124,8 @@ export default function Chat({ conversationId }: ChatProps) {
         id="history"
         className='mx-auto flex-1 flex-col justify-center pb-8 h-[calc(100vh-200px)] overflow-y-auto'
       >
+        { isPending && <Spinner/> }
+
         {dataMap}
       </div>
 
