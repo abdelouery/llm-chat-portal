@@ -43,7 +43,7 @@ export default function Chat({ conversation }: ChatProps) {
     // Set up a MutationObserver to watch for changes in historyRef
     const observer = new MutationObserver(() => {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-    });
+    })
 
     // Observe changes in the history element
     if (historyElement) {
@@ -55,8 +55,8 @@ export default function Chat({ conversation }: ChatProps) {
       return () => historyElement.removeEventListener('scroll', handleScroll)
     }
 
-    return () => observer.disconnect();
-  }, [conversation, data, promptHappened])
+    return () => observer.disconnect()
+  }, [conversation, prevConversationId, queryClient, data, promptHappened])
 
   const handleScroll = () => {
     if (historyRef.current) {
@@ -87,13 +87,13 @@ export default function Chat({ conversation }: ChatProps) {
     let done = false
     while (!done) {
       setPromptHappened(promptHappened ? false : true)
-      const { value, done: streamDone } = await reader!.read();
-      done = streamDone;
+      const { value, done: streamDone } = await reader!.read()
+      done = streamDone
 
       if (value) {
         // Decode the bytes to a string and accumulate response
-        const chunk = decoder.decode(value, { stream: true });
-        responseInteraction.content += chunk;
+        const chunk = decoder.decode(value, { stream: true })
+        responseInteraction.content += chunk
         setHistory([...history, interaction, responseInteraction])
 
         if (historyRef.current) {
