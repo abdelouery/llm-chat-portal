@@ -3,8 +3,12 @@ export type UserAssistantInteraction = {
   content: string
 }
 
+type ObjectId = {
+  $oid: string
+}
+
 export type Conversation = {
-  _id: object
+  _id: ObjectId
   title: string
   creation_date: string
   history: UserAssistantInteraction[]

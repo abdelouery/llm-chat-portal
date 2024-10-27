@@ -3,7 +3,7 @@ import { Conversation } from './types'
 
 type SidebarProps = {
   conversations: Conversation[]
-  onSwitchConversation: (conversationId: string) => void
+  onSwitchConversation: (conversation: Conversation) => void
   onAddConversation: () => void
   onChatView: () => void
   onSettingsView: () => void
@@ -17,15 +17,15 @@ function Sidebar({
   onSettingsView
 }: SidebarProps) {
 
-  const dataMap = conversations.map((conversation, index) => (
+  const dataMap = conversations.map(conversation => (
     <div
-      key={index}
-      onClick={() => onSwitchConversation(conversation.title)}
+      key={conversation._id.$oid}
+      onClick={() => onSwitchConversation(conversation)}
       className="text-white py-2.5 px-1.5
       cursor-pointer hover:font-semibold"
     >
+      <MessageSquareText className='inline'/>
       {conversation.title}
-      <MessageSquareText />
     </div>
   ))
 
@@ -36,11 +36,11 @@ function Sidebar({
 
         <div
           onClick={onAddConversation}
-          className="text-white py-2.5 px-1.5
+          className="text-yellow-600 py-2.5 px-1.5
           cursor-pointer hover:font-semibold"
         >
+          <SquarePlus className='inline'/>
           Add Conversation
-          <SquarePlus />
         </div>
       </div>
       <div className="fixed bottom-2 left-0 px-6 py-2">

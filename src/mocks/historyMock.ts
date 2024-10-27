@@ -20,5 +20,3 @@ export const getHistoryMock = [
     "content": "Hello there👋, how can I assist you with your coding or tech-related queries?\n"
   }
 ]
-
-export const sendPromptMock = '***This is a mocked Response***\nHello there, how can I assist you in testing something today? Are you looking for a way to test code, an application, or something else? Please provide more details so I can give the best possible assistance.'

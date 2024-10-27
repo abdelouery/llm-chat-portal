@@ -1,52 +1,70 @@
 import { ArrowUp } from 'lucide-react'
-import { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { UserAssistantInteraction } from './types'
-import { useQuery } from '@tanstack/react-query'
+import { Conversation, UserAssistantInteraction } from './types'
 import { fetchHistory, sendPrompt } from './services/history'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Spinner } from './Spinner'
 
 type ChatProps = {
-  conversationId: string
+  conversation: Conversation | null
 }
 
-export default function Chat({ conversationId }: ChatProps) {
+export default function Chat({ conversation }: ChatProps) {
   const [history, setHistory] = useState<UserAssistantInteraction[]>([])
-  const [promptHappened, setPromptHappened] = useState(false)
   const [prompt, setPrompt] = useState<string>('')
+  const [promptHappened, setPromptHappened] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [prevConversationId] = useState('')
   const historyRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
 
+  const queryClient = useQueryClient()
+
+  const conversationId = conversation?._id.$oid
   const { isPending, data } = useQuery({
     queryKey: ['fetchHistory'],
-    queryFn: async () => fetchHistory(conversationId)
+    queryFn: async () => fetchHistory(conversationId),
+    enabled: !!conversationId
   })
 
   useEffect(() => {
-    if (data) {
-      setHistory(data.filter(i => i.role !== 'system'))
+    // Convesation changed, fetch history
+    if (conversation && conversation._id.$oid !== prevConversationId) {
+      queryClient.invalidateQueries({ queryKey: ['fetchHistory'] })
     }
 
-    if (historyRef.current) {
-      historyRef.current.scrollTop = historyRef.current.scrollHeight
+    if (data) {
+      setHistory(data)
     }
 
     const historyElement = historyRef.current
+
+    // Set up a MutationObserver to watch for changes in historyRef
+    const observer = new MutationObserver(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    });
+
+    // Observe changes in the history element
+    if (historyElement) {
+      observer.observe(historyElement, { childList: true })
+    }
+
     if (historyElement) {
       historyElement.addEventListener('scroll', handleScroll)
       return () => historyElement.removeEventListener('scroll', handleScroll)
     }
-  }, [data, promptHappened, conversationId])
 
-  // Gérer l'apparition/disparition du bouton de scroll
+    return () => observer.disconnect();
+  }, [conversation, data, promptHappened])
+
   const handleScroll = () => {
     if (historyRef.current) {
       const scrollTop = historyRef.current.scrollTop
-      setShowScrollTop(scrollTop > 100) // Afficher après 100px de scroll
+      setShowScrollTop(scrollTop > 100)
     }
   }
 
-  // Fonction pour remonter en haut
   const scrollToTop = () => {
     if (historyRef.current) {
       historyRef.current.scrollTo({
@@ -56,17 +74,32 @@ export default function Chat({ conversationId }: ChatProps) {
     }
   }
 
-  const promptLLM = async (conversationId: string, content: string) => {
+  const promptLLM = async (conversationId: string | undefined, content: string) => {
     const interaction = { role: 'user', content }
     const responseInteraction = { role: 'assistant', content: '' }
 
-    const response = sendPrompt(conversationId, content);
-    setPromptHappened(true);
+    setHistory([...history, interaction])
 
-    const decoder = new TextDecoder()
-    for await (const chunk of response.body) {
-      responseInteraction.content += decoder.decode(chunk, { stream: true })
-      setHistory([...history, interaction, responseInteraction])
+    const response = await sendPrompt(conversationId, content)
+    const reader = response.body?.getReader()
+    const decoder = new TextDecoder("utf-8")
+
+    let done = false
+    while (!done) {
+      setPromptHappened(promptHappened ? false : true)
+      const { value, done: streamDone } = await reader!.read();
+      done = streamDone;
+
+      if (value) {
+        // Decode the bytes to a string and accumulate response
+        const chunk = decoder.decode(value, { stream: true });
+        responseInteraction.content += chunk;
+        setHistory([...history, interaction, responseInteraction])
+
+        if (historyRef.current) {
+          historyRef.current.scrollTop = historyRef.current.scrollHeight
+        }
+      }
     }
   }
 
@@ -97,18 +130,17 @@ export default function Chat({ conversationId }: ChatProps) {
       prompt: HTMLInputElement
     }
 
-    const value = formElements.prompt.value.trim();
+    const value = formElements.prompt.value.trim()
     if (value !== '') {
-      promptLLM(conversationId, value)
+      promptLLM(conversation?._id.$oid, value)
       setPrompt('')
-      setPromptHappened(true)
     }
   }
 
   return (
     <>
       <h2 className='text-center p-4 text-2xl text-white font-semibold'>
-        {conversationId}
+        {conversation?.title}
       </h2>
 
       <button
@@ -127,6 +159,8 @@ export default function Chat({ conversationId }: ChatProps) {
         { isPending && <Spinner/> }
 
         {dataMap}
+
+        <div ref={bottomRef}></div>
       </div>
 
       <div className='flex justify-center'>

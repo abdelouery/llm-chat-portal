@@ -1,7 +1,7 @@
-import { http, HttpResponse } from 'msw';
-import { getConversationsMock, createConversationMock } from './conversationsMock';
-import { getHistoryMock, sendPromptMock } from './historyMock';
-import { Conversation } from '../types';
+import { http, HttpResponse } from 'msw'
+import { getConversationsMock, createConversationMock } from './conversationsMock'
+import { getHistoryMock } from './historyMock'
+import { Conversation } from '../types'
 
 export const handlers = [
   http.get('api/conversations', () => {
@@ -9,7 +9,7 @@ export const handlers = [
   }),
 
   http.post('api/conversations', async ({ request }) => {
-    const body = await request.json();
+    const body = await request.json()
 
     return HttpResponse.json(createConversationMock((body as Conversation).title), { status: 200 })
   }),

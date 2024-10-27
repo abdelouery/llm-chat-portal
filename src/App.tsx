@@ -9,7 +9,7 @@ import { formatDate } from './services/utils'
 function App() {
   const [view, setView] = useState<string>('chat')
   const [conversations, setConversations] = useState<Conversation[]>([])
-  const [currentConv, setCurrentConv] = useState<string>('')
+  const [currentConv, setCurrentConv] = useState<Conversation | null>(null)
 
   const { isPending, data } = useQuery({
     queryKey: ['fetchConversations'],
@@ -19,7 +19,7 @@ function App() {
   useEffect(() => {
     if (data) {
       setConversations(data)
-      setCurrentConv(data[0].title)
+      setCurrentConv(data[0])
     }
   }, [isPending, data])
 
@@ -28,7 +28,7 @@ function App() {
     createConversation(`Conversation of ${today}`)
       .then((created: Conversation) => {
         setConversations([...conversations, created])
-        setCurrentConv(created.title)
+        setCurrentConv(created)
       })
   }
 
@@ -44,7 +44,7 @@ function App() {
     <div id="wrapper" className="w-full min-h-screen flex">
       <Sidebar
         conversations={conversations}
-        onSwitchConversation={id => setCurrentConv(id)}
+        onSwitchConversation={conv => setCurrentConv(conv)}
         onAddConversation={addEmptyConversation}
         onChatView={() => setView('chat')}
         onSettingsView={() => setView('settings')}>
@@ -54,7 +54,7 @@ function App() {
         <div>
           {
           view === 'chat'
-            ? <Chat conversationId={currentConv}></Chat>
+            ? <Chat conversation={currentConv}></Chat>
             : renderSettings()
           }
         </div>

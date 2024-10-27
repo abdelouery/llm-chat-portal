@@ -1,15 +1,16 @@
-import { UserAssistantInteraction } from '../types';
+import { UserAssistantInteraction } from '../types'
+import { CONFIG } from './config'
 import { request } from './request'
 
-const url = import.meta.env.DEV ? 'api' : 'http://localhost:8000/api'
+const url = CONFIG.useMocks ? 'api' : 'http://localhost:8000/api'
 
-export async function fetchHistory(id: string) {
-  return await request<UserAssistantInteraction[]>(`${url}/history/${id}`);
+export async function fetchHistory(id: string | undefined) {
+  return await request<UserAssistantInteraction[]>(`${url}/history/${id}`)
 }
 
-export async function sendPrompt(conversationId: string, content: string) {
+export async function sendPrompt(conversationId: string | undefined, content: string) {
   return await fetch(
-    `${url}/api/prompt/${conversationId}`, {
+    `${url}/prompt/${conversationId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

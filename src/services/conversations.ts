@@ -1,11 +1,12 @@
 import { Conversation } from '../types'
+import { CONFIG } from './config'
 import { request } from './request'
-import { formatDate } from './utils';
+import { formatDate } from './utils'
 
-const url = import.meta.env.DEV ? 'api' : 'http://localhost:8000/api'
+const url = CONFIG.useMocks ? 'api' : 'http://localhost:8000/api'
 
 export async function fetchConversations() {
-  return await request<Conversation[]>(`${url}/conversations`);
+  return await request<Conversation[]>(`${url}/conversations`)
 }
 
 export async function createConversation(title: string) {
