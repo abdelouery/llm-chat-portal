@@ -22,3 +22,9 @@ export async function createConversation(title: string) {
     })
   })
 }
+
+export async function deleteConversation(id: string) {
+  return await request<Conversation>(`${url}/conversations/${id}`, {
+    method: 'DELETE'
+  })
+}

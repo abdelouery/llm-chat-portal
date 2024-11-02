@@ -1,4 +1,4 @@
-import { MessageCircle, Bolt, MessageSquareText, SquarePlus } from 'lucide-react'
+import { MessageCircle, Bolt, SquarePlus, XIcon } from 'lucide-react'
 import { Conversation } from './types'
 import { useEffect, useState } from 'react'
 
@@ -6,6 +6,7 @@ type SidebarProps = {
   conversations: Conversation[]
   onSwitchConversation: (conversation: Conversation) => void
   onAddConversation: () => void
+  onRemoveConversation: (conversation: Conversation) => void
   onChatView: () => void
   onSettingsView: () => void
 }
@@ -14,11 +15,14 @@ function Sidebar({
   conversations,
   onSwitchConversation,
   onAddConversation,
+  onRemoveConversation,
   onChatView,
   onSettingsView
 }: SidebarProps) {
 
   const [active, setActive] = useState<string>('')
+
+  const applyActive = (c: Conversation) => active === c._id.$oid ? 'text-yellow-600' : 'text-white';
 
   useEffect(() => {
     if (conversations.length) {
@@ -29,11 +33,19 @@ function Sidebar({
   const dataMap = conversations.map(conversation => (
     <div
       key={conversation._id.$oid}
-      onClick={() => { onSwitchConversation(conversation); setActive(conversation._id.$oid) }}
-      className={'py-2.5 px-1.5 cursor-pointer hover:font-semibold ' + (active === conversation._id.$oid ? 'text-yellow-600' : 'text-white')}
+      className={'py-2.5 px-1.5'}
     >
-      <MessageSquareText className='inline'/>
-      {conversation.title}
+      <XIcon
+        className='inline text-red-300 hover:text-red-600 cursor-pointer'
+        onClick={ () => onRemoveConversation(conversation) }
+      />
+
+      <span
+        className={'cursor-pointer hover:text-yellow-800 ' + applyActive(conversation)}
+        onClick={() => { onSwitchConversation(conversation); setActive(conversation._id.$oid) }}
+      >
+        {conversation.title}
+      </span>
     </div>
   ))
 
@@ -44,11 +56,10 @@ function Sidebar({
 
         <div
           onClick={onAddConversation}
-          className="text-green-600 py-2.5 px-1.5
+          className="text-white py-2.5 px-1.5
           cursor-pointer hover:font-semibold"
         >
           <SquarePlus className='inline'/>
-          Add Conversation
         </div>
       </div>
       <div className="fixed bottom-2 left-0 px-6 py-2">
